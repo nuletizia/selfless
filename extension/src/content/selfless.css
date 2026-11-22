@@ -85,3 +85,5 @@ a.selfless-bar { background-color: var(--selfless-mark) !important; transition: 
 .selfless-panel-table td { padding: 6px 8px; border-bottom: 1px solid #eee; text-align: right; vertical-align: top; }
 .selfless-panel-table th:first-child, .selfless-panel-table td:first-child { text-align: left; }
 .selfless-panel-table tr.selfless-unmatched td { background: rgba(176, 96, 0, 0.07); }
+.selfless-aside-title { margin-top: 24px; }
+.selfless-aside td, .selfless-aside td a { color: #888; }

@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import {
   attributeCitations,
+  clusterWorks,
   countCitations,
   hIndex,
   i10Index,
@@ -65,8 +66,9 @@ test('byYear groups citations by citing year across works', () => {
     W('X4', ['Z'], ['P2']), // no year: not in the chart
   ];
   const cites = attributeCitations(new Set(['P1', 'P2']), citing);
-  const { byYear } = countCitations(['O'], works, cites, 2021);
-  assert.deepEqual(byYear, {
+  const { perWork } = countCitations(['O'], works, cites, 2021);
+  const summary = summarize([...perWork.values()]);
+  assert.deepEqual(summary.byYear, {
     2022: { all: 3, self: 2, paper: 2, coauthor: 2 },
     2023: { all: 1, self: 0, paper: 0, coauthor: 0 },
   });
@@ -126,4 +128,22 @@ test('owner resolution picks the name-compatible author on most probes', () => {
   // A1 is on more probes but has the wrong name; A2 and A3 both qualify (split profile);
   // A4 appears once, so it is left out.
   assert.deepEqual(pickOwnerIds('Maria G. Rossi', probes), ['A2', 'A3']);
+});
+
+test('clusterWorks keeps works linked to the Scholar rows through co-authors', () => {
+  // Two people merged in one OpenAlex record: S1..S3 are this author (seeds S1),
+  // X1, X2 are another person with the same name. Solo work L has no link.
+  const works = [
+    { id: 'S1', coauthors: ['T'] },
+    { id: 'S2', coauthors: ['T', 'U'] }, // shares T with S1
+    { id: 'S3', coauthors: ['U'] }, // linked through S2
+    { id: 'X1', coauthors: ['F', 'J'] },
+    { id: 'X2', coauthors: ['J'] },
+    { id: 'L', coauthors: [] },
+  ];
+  assert.deepEqual([...clusterWorks(works, ['S1', null])].sort(), ['S1', 'S2', 'S3']);
+  // Once X1 appears on the Scholar page (Show more), its group is counted too.
+  assert.deepEqual([...clusterWorks(works, ['S1', 'X1'])].sort(), ['S1', 'S2', 'S3', 'X1', 'X2']);
+  // No matched rows at all: nothing to anchor on, keep everything.
+  assert.equal(clusterWorks(works, [null]).size, 6);
 });

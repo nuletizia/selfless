@@ -91,6 +91,15 @@ conference papers. Books and older work (before about 2010) are under-covered, a
 Selfless flags them. Theses, which cite their own author heavily, are mostly missing
 from OpenAlex, so the self-citation rates are probably a lower bound.
 
+### Two people with the same name
+
+OpenAlex sometimes merges two researchers with the same name into one author. You can
+tell because OpenAlex then finds more citations than Scholar counts in total. When that
+happens, Selfless keeps only the works connected to the papers on the Scholar page
+through shared co-authors, and lists the rest in the paper breakdown as "probably
+another author with the same name". Clicking "Show more" on Scholar brings more papers
+into the count if they belong to the profile.
+
 ## OpenAlex API key
 
 Without a key, OpenAlex gives every IP address a small shared daily budget and blocks

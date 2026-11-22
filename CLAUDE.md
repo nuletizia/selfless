@@ -76,6 +76,11 @@ question in HANDOFF.md).
   key matches, take the name-compatible author ID that appears on most of them, plus any
   other name-compatible ID on at least two (split profiles). The options page override
   wins.
+- Merged OpenAlex authors (two people, one ID): if verified citations over the whole
+  record exceed Scholar's total by more than 5%, `evaluate()` in the service worker
+  restricts the works to those linked to matched Scholar rows through shared co-authors
+  (`clusterWorks`). Not applied otherwise: on clean profiles it drops real solo and
+  older papers (tested: 22% of a senior profile's citations with 20 rows loaded).
 - Paper matching: normalized title (lowercase, alphanumerics, first ~20 chars) plus year
   within ±1; unmatched rows are shown as "not found", not as zero.
 

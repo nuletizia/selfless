@@ -65,21 +65,24 @@ const emptyCounts = () => ({ all: 0, self: 0, paper: 0, coauthor: 0 });
 // works: the owner's OpenAlex works (with authorships). ownerIds: one or more author IDs
 // (Scholar profiles can be split across several OpenAlex IDs). sinceYear: Scholar's
 // "Since" column year; citing works published in or after it also count in `since`.
-// Returns { perWork: Map(id -> {counts, since}), byYear: {year: counts}, coauthorCount },
-// where each filter value is the number of citing works that filter REMOVES. byYear
-// groups the same citations by the citing work's publication year (Scholar's chart).
+// Returns { perWork: Map(id -> {counts, since, byYear}), coauthorCount }, where each
+// filter value is the number of citing works that filter REMOVES. byYear groups the same
+// citations by the citing work's publication year (Scholar's chart).
+// The network is built from every work of the OpenAlex record, even works that
+// clusterWorks later sets aside as another person's: their co-authors would only matter
+// if they cited this author, which is unlikely when the two fields are unrelated.
 export function countCitations(ownerIds, works, cites, sinceYear = null) {
   const owner = new Set(ownerIds);
   const network = new Set(owner);
   for (const w of works) for (const a of authorIds(w)) network.add(a);
   const perWork = new Map();
-  const byYear = {};
   for (const w of works) {
     const id = shortId(w.id);
     const paperAuthors = authorIds(w);
     for (const o of owner) paperAuthors.add(o);
     const counts = emptyCounts();
     const since = emptyCounts();
+    const byYear = {};
     for (const { authors, year } of (cites.get(id) || new Map()).values()) {
       const targets = sinceYear && year && year >= sinceYear ? [counts, since] : [counts];
       if (year) targets.push((byYear[year] = byYear[year] || emptyCounts()));
@@ -90,11 +93,11 @@ export function countCitations(ownerIds, works, cites, sinceYear = null) {
         if (intersects(authors, network)) c.coauthor += 1;
       }
     }
-    perWork.set(id, { counts, since });
+    perWork.set(id, { counts, since, byYear });
   }
   let coauthorCount = 0;
   for (const a of network) if (!owner.has(a)) coauthorCount += 1;
-  return { perWork, byYear, coauthorCount };
+  return { perWork, coauthorCount };
 }
 
 export const kept = (counts, filter) =>
@@ -113,17 +116,48 @@ function indices(vals) {
   return { citations: vals.reduce((s, x) => s + x, 0), h: hIndex(vals), i10: i10Index(vals) };
 }
 
-// works: [{counts, since}]. Returns, for 'off' and each filter,
-// { citations, h, i10, since: {citations, h, i10} } plus `removed` for the filters.
+// works: [{counts, since, byYear}]. Returns, for 'off' and each filter,
+// { citations, h, i10, since: {citations, h, i10} } plus `removed` for the filters, and
+// byYear: {year: counts} summed over the works (Scholar's chart).
 // Scholar's "Since" indices count only citations received since that year; same here.
 export function summarize(works) {
-  const out = {};
+  const out = { byYear: {} };
+  for (const w of works) {
+    for (const [y, c] of Object.entries(w.byYear || {})) {
+      const t = (out.byYear[y] = out.byYear[y] || emptyCounts());
+      for (const k of Object.keys(t)) t[k] += c[k];
+    }
+  }
   for (const f of ['off', ...FILTERS]) {
     out[f] = indices(works.map((w) => kept(w.counts, f)));
     out[f].since = indices(works.map((w) => (w.since ? kept(w.since, f) : 0)));
   }
   for (const f of FILTERS) out[f].removed = out.off.citations - out[f].citations;
   return out;
+}
+
+// OpenAlex sometimes merges two people with the same name into one author record. The
+// works matched to Scholar rows (seeds) are certainly the profile owner's; any other work
+// that shares a co-author with them, directly or through a chain of such works, is kept
+// too. Co-authors exclude the owner. Works with no link (including solo works not on the
+// page) are set aside. works: [{id, coauthors: [author ids]}].
+// Returns the Set of kept work ids; with no seeds, every work is kept.
+export function clusterWorks(works, seedIds) {
+  const kept = new Set([...seedIds].filter(Boolean));
+  if (!kept.size) return new Set(works.map((w) => w.id));
+  const linked = new Set();
+  for (const w of works) if (kept.has(w.id)) for (const a of w.coauthors || []) linked.add(a);
+  let grew = true;
+  while (grew) {
+    grew = false;
+    for (const w of works) {
+      if (kept.has(w.id) || !(w.coauthors || []).some((a) => linked.has(a))) continue;
+      kept.add(w.id);
+      for (const a of w.coauthors) linked.add(a);
+      grew = true;
+    }
+  }
+  return kept;
 }
 
 const yearsCompatible = (a, b) => !a || !b || Math.abs(Number(a) - Number(b)) <= 1;

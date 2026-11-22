@@ -11,7 +11,7 @@
   const statCells = SelflessDom.statCells();
   const histBars = SelflessDom.histBars();
   const { settings } = await chrome.storage.local.get('settings');
-  const state = { filter: (settings && settings.defaultFilter) || 'off', data: null, matches: [] };
+  const state = { filter: (settings && settings.defaultFilter) || 'off', data: null, matches: [], included: new Set() };
 
   const controls = SelflessUI.createControls(statsTable, {
     onFilter(f) {
@@ -34,7 +34,7 @@
     SelflessUI.renderControls(controls, { filter: state.filter, data: state.data, scholar });
     if (!state.data) return;
     SelflessUI.swapStats(statCells, state.filter, state.data.summary);
-    SelflessUI.swapHistogram(histBars, state.filter, state.data.result.byYear);
+    SelflessUI.swapHistogram(histBars, state.filter, state.data.summary.byYear);
     const worksById = new Map(state.data.result.works.map((w) => [w.id, w]));
     const rows = SelflessDom.rowElements().map((tr, i) => ({
       tr,
@@ -42,13 +42,14 @@
       workId: state.matches[i] || null,
     }));
     SelflessUI.renderRows(state.filter, rows, worksById);
-    SelflessUI.renderPanel(SelflessDom.articles(), state.data, new Set(state.matches.filter(Boolean)), scholar);
+    SelflessUI.renderPanel(SelflessDom.articles(), state.data, new Set(state.matches.filter(Boolean)), state.included, scholar);
   }
 
   function profile() {
     return {
       scholarId,
       sinceYear,
+      scholarTotal: scholar.citations,
       name: SelflessDom.name(),
       rows: SelflessDom.rows().map(({ title, year }) => ({ title, year })),
     };
@@ -64,6 +65,7 @@
         state.data = { result: msg.result, summary: msg.summary };
         SelflessUI.resetControls(controls);
         state.matches = msg.matches;
+        state.included = new Set(msg.included);
         SelflessUI.setStatus(controls, '');
         render();
         port.disconnect();
@@ -83,9 +85,12 @@
     if (!state.data) return;
     clearTimeout(timer);
     timer = setTimeout(async () => {
-      const res = await chrome.runtime.sendMessage({ type: 'match', scholarId, sinceYear, rows: profile().rows });
+      const res = await chrome.runtime.sendMessage({ type: 'match', scholarId, sinceYear, scholarTotal: scholar.citations, rows: profile().rows });
       if (res && res.matches) {
         state.matches = res.matches;
+        state.included = new Set(res.included);
+        state.data.summary = res.summary;
+        SelflessUI.resetControls(controls);
         render();
       }
     }, 200);

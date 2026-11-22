@@ -161,6 +161,9 @@ const SelflessUI = (() => {
         ? [el('div', {}, base)]
         : [el('div', { title: `${EXCLUDING[filter]}: ${fmt(s[filter].removed)} of ${fmt(verified)} verified citations removed.` },
             el('span', { class: 'selfless-mark' }, '*'), ` ${base} ${fmt(s[filter].removed)} removed (${pct0(s[filter].removed, verified)}).`)];
+    if (scholar.citations && verified > scholar.citations * 1.05) {
+      lines.push(el('div', { class: 'selfless-warn', title: 'OpenAlex may be mixing this author with someone else with the same name. Check Paper breakdown, or set the OpenAlex author in Selfless options.' }, 'More than Scholar: OpenAlex may mix two authors.'));
+    }
     if (data.result.truncated) {
       lines.push(el('div', { class: 'selfless-warn', title: 'OpenAlex returns at most 10,000 results per query without an API key. Add one in Selfless options.' }, 'Incomplete: add an API key.'));
     }
@@ -298,17 +301,35 @@ const SelflessUI = (() => {
 
   // ---- Paper breakdown panel ------------------------------------------------------
 
-  function renderPanel(container, data, matchedIds, scholar) {
+  // Works linked to the Scholar rows are listed and counted; works OpenAlex attributes to
+  // the same author record but that share no co-author with them (see clusterWorks) are
+  // listed separately as probably another person with the same name, and not counted.
+  function renderPanel(container, data, matchedIds, includedIds, scholar) {
     let panel = document.getElementById('selfless-panel');
     if (!panel) {
       panel = el('section', { id: 'selfless-panel', class: 'selfless-panel', hidden: '' });
       container.append(panel);
     }
-    const works = [...data.result.works].sort((a, b) => b.counts.all - a.counts.all);
+    const all = [...data.result.works].sort((a, b) => b.counts.all - a.counts.all);
+    const works = all.filter((w) => includedIds.has(w.id));
+    const aside = all.filter((w) => !includedIds.has(w.id));
     const notOnPage = works.filter((w) => !matchedIds.has(w.id)).length;
     const r = data.result;
     const link = (href, text) => el('a', { href, target: '_blank', rel: 'noopener noreferrer' }, text);
     const authorLinks = r.ownerIds.map((id, i) => [i ? ', ' : '', link(`https://openalex.org/authors/${id}`, id)]);
+    const head = () =>
+      el('thead', {}, el('tr', {}, ['Title', 'Year', 'Verified', 'Excl. author', "Excl. paper's authors", 'Excl. network'].map((h) => el('th', { scope: 'col' }, h))));
+    const row = (w, cls, title) =>
+      el(
+        'tr',
+        { class: cls, title },
+        el('td', {}, link(`https://openalex.org/works/${w.id}`, w.title || w.id)),
+        el('td', {}, w.year ?? ''),
+        el('td', {}, fmt(w.counts.all)),
+        el('td', {}, fmt(kept(w.counts, 'self'))),
+        el('td', {}, fmt(kept(w.counts, 'paper'))),
+        el('td', {}, fmt(kept(w.counts, 'coauthor'))),
+      );
 
     panel.replaceChildren(
       el('h3', { class: 'selfless-panel-title' }, 'Paper breakdown (Selfless, from OpenAlex)'),
@@ -318,41 +339,30 @@ const SelflessUI = (() => {
         `OpenAlex author ${r.ownerIds.length > 1 ? 'IDs' : 'ID'} `,
         authorLinks,
         r.overridden ? ' (set in options)' : ' (matched automatically; set it in options if wrong)',
-        `. ${works.length} works, ${fmt(r.coauthorCount)} co-authors, ${fmt(data.summary.off.citations)} verified citations of ${fmt(scholar.citations)} on Scholar. `,
+        `. ${works.length} works, ${fmt(data.summary.off.citations)} verified citations of ${fmt(scholar.citations)} on Scholar. `,
         `Computed ${new Date(r.computedAt).toLocaleDateString()}.`,
       ),
       notOnPage
-        ? el('div', { class: 'gs_gray selfless-panel-note' }, `${notOnPage} works are not matched to a row on this page (highlighted). Scholar may list them further down (use Show more), merge them with another version, or not list them at all.`)
+        ? el('div', { class: 'gs_gray selfless-panel-note' }, `${notOnPage} works are not matched to a row on this page (highlighted) but share co-authors with works that are. Scholar may list them further down (use Show more), merge them with another version, or not list them at all.`)
         : null,
       el(
         'table',
         { class: 'selfless-panel-table' },
-        el(
-          'thead',
-          {},
-          el(
-            'tr',
-            {},
-            ['Title', 'Year', 'Verified', 'Excl. author', "Excl. paper's authors", 'Excl. network'].map((h) => el('th', { scope: 'col' }, h)),
-          ),
-        ),
-        el(
-          'tbody',
-          {},
-          works.map((w) =>
-            el(
-              'tr',
-              { class: matchedIds.has(w.id) ? '' : 'selfless-unmatched', title: matchedIds.has(w.id) ? null : 'Not matched to a row on this page' },
-              el('td', {}, link(`https://openalex.org/works/${w.id}`, w.title || w.id)),
-              el('td', {}, w.year ?? ''),
-              el('td', {}, fmt(w.counts.all)),
-              el('td', {}, fmt(kept(w.counts, 'self'))),
-              el('td', {}, fmt(kept(w.counts, 'paper'))),
-              el('td', {}, fmt(kept(w.counts, 'coauthor'))),
-            ),
-          ),
-        ),
+        head(),
+        el('tbody', {}, works.map((w) => (matchedIds.has(w.id) ? row(w, '', null) : row(w, 'selfless-unmatched', 'Not matched to a row on this page')))),
       ),
+      aside.length
+        ? [
+            el('h3', { class: 'selfless-panel-title selfless-aside-title' }, `Not counted: probably another author with the same name (${aside.length})`),
+            el(
+              'div',
+              { class: 'gs_gray selfless-panel-note' },
+              'OpenAlex lists these works under the same author, but they share no co-author with the papers on this Scholar profile. ' +
+                'If some are really this author, click Show more on Scholar: once a work appears on the page it is counted.',
+            ),
+            el('table', { class: 'selfless-panel-table selfless-aside' }, head(), el('tbody', {}, aside.map((w) => row(w, '', null)))),
+          ]
+        : null,
     );
     return panel;
   }
