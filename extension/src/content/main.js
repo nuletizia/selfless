@@ -9,6 +9,7 @@
   const sinceYear = SelflessDom.sinceYear();
   const scholar = SelflessDom.stats(); // read before any swap
   const statCells = SelflessDom.statCells();
+  const histBars = SelflessDom.histBars();
   const { settings } = await chrome.storage.local.get('settings');
   const state = { filter: (settings && settings.defaultFilter) || 'off', data: null, matches: [] };
 
@@ -33,6 +34,7 @@
     SelflessUI.renderControls(controls, { filter: state.filter, data: state.data, scholar });
     if (!state.data) return;
     SelflessUI.swapStats(statCells, state.filter, state.data.summary);
+    SelflessUI.swapHistogram(histBars, state.filter, state.data.result.byYear);
     const worksById = new Map(state.data.result.works.map((w) => [w.id, w]));
     const rows = SelflessDom.rowElements().map((tr, i) => ({
       tr,
@@ -60,6 +62,7 @@
         SelflessUI.setStatus(controls, msg.text);
       } else if (msg.type === 'result') {
         state.data = { result: msg.result, summary: msg.summary };
+        SelflessUI.resetControls(controls);
         state.matches = msg.matches;
         SelflessUI.setStatus(controls, '');
         render();

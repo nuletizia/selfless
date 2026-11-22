@@ -45,6 +45,23 @@ const SelflessDom = {
     return { citations: rows[0], h: rows[1], i10: rows[2] };
   },
 
+  // Bars of the citations-per-year chart: [{bar, label, year}]. Each bar is an absolutely
+  // positioned link whose height is proportional to its count; the year labels sit
+  // under the bars, matched by horizontal position.
+  histBars() {
+    const hist = document.querySelector('#gsc_rsb_cit .gsc_md_hist_b');
+    if (!hist) return [];
+    const px = (el) => parseFloat(el.style.right) || 0;
+    const years = [...hist.querySelectorAll('.gsc_g_t')].map((y) => ({ right: px(y), year: parseInt(y.textContent, 10) }));
+    return [...hist.querySelectorAll('a.gsc_g_a')]
+      .map((bar) => {
+        const r = px(bar);
+        const near = years.reduce((best, y) => (!best || Math.abs(y.right - r) < Math.abs(best.right - r) ? y : best), null);
+        return { bar, label: bar.querySelector('.gsc_g_al'), year: near ? near.year : null };
+      })
+      .filter((b) => b.label && b.year);
+  },
+
   statsTable() {
     return document.getElementById('gsc_rsb_st');
   },

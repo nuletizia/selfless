@@ -65,13 +65,15 @@ const emptyCounts = () => ({ all: 0, self: 0, paper: 0, coauthor: 0 });
 // works: the owner's OpenAlex works (with authorships). ownerIds: one or more author IDs
 // (Scholar profiles can be split across several OpenAlex IDs). sinceYear: Scholar's
 // "Since" column year; citing works published in or after it also count in `since`.
-// Returns { perWork: Map(id -> {counts, since}), coauthorCount }, where each filter value
-// is the number of citing works that filter REMOVES.
+// Returns { perWork: Map(id -> {counts, since}), byYear: {year: counts}, coauthorCount },
+// where each filter value is the number of citing works that filter REMOVES. byYear
+// groups the same citations by the citing work's publication year (Scholar's chart).
 export function countCitations(ownerIds, works, cites, sinceYear = null) {
   const owner = new Set(ownerIds);
   const network = new Set(owner);
   for (const w of works) for (const a of authorIds(w)) network.add(a);
   const perWork = new Map();
+  const byYear = {};
   for (const w of works) {
     const id = shortId(w.id);
     const paperAuthors = authorIds(w);
@@ -80,6 +82,7 @@ export function countCitations(ownerIds, works, cites, sinceYear = null) {
     const since = emptyCounts();
     for (const { authors, year } of (cites.get(id) || new Map()).values()) {
       const targets = sinceYear && year && year >= sinceYear ? [counts, since] : [counts];
+      if (year) targets.push((byYear[year] = byYear[year] || emptyCounts()));
       for (const c of targets) {
         c.all += 1;
         if (intersects(authors, owner)) c.self += 1;
@@ -91,7 +94,7 @@ export function countCitations(ownerIds, works, cites, sinceYear = null) {
   }
   let coauthorCount = 0;
   for (const a of network) if (!owner.has(a)) coauthorCount += 1;
-  return { perWork, coauthorCount };
+  return { perWork, byYear, coauthorCount };
 }
 
 export const kept = (counts, filter) =>

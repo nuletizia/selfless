@@ -56,6 +56,22 @@ test('since counts only citing works from that year on', () => {
   assert.deepEqual(perWork.get('P1').since, { all: 2, self: 1, paper: 1, coauthor: 1 });
 });
 
+test('byYear groups citations by citing year across works', () => {
+  const works = [W('P1', ['O']), W('P2', ['O'])];
+  const citing = [
+    W('X1', ['O'], ['P1', 'P2'], { publication_year: 2022 }), // counts once per cited paper
+    W('X2', ['Z'], ['P1'], { publication_year: 2022 }),
+    W('X3', ['Z'], ['P2'], { publication_year: 2023 }),
+    W('X4', ['Z'], ['P2']), // no year: not in the chart
+  ];
+  const cites = attributeCitations(new Set(['P1', 'P2']), citing);
+  const { byYear } = countCitations(['O'], works, cites, 2021);
+  assert.deepEqual(byYear, {
+    2022: { all: 3, self: 2, paper: 2, coauthor: 2 },
+    2023: { all: 1, self: 0, paper: 0, coauthor: 0 },
+  });
+});
+
 test('split owner IDs all count as self', () => {
   const works = [W('P1', ['O1']), W('P2', ['O2'])];
   const cites = attributeCitations(new Set(['P1', 'P2']), [W('X', ['O2'], ['P1'])]);

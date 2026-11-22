@@ -12,7 +12,7 @@ import {
   titleKey,
 } from '../lib/compute.js';
 
-export const RESULT_VERSION = 2;
+export const RESULT_VERSION = 3;
 const PROBES = 8; // visible Scholar rows used to find the author
 const BATCH = 50; // cited IDs per cites: query
 const PAGE_CAP = 10000;
@@ -76,7 +76,7 @@ export async function analyze(client, profile, override, progress) {
     attributeCitations(own, r.results, cites);
   }
 
-  const { perWork, coauthorCount } = countCitations(ownerIds, works, cites, profile.sinceYear);
+  const { perWork, byYear, coauthorCount } = countCitations(ownerIds, works, cites, profile.sinceYear);
   return {
     version: RESULT_VERSION,
     scholarId: profile.scholarId,
@@ -85,6 +85,7 @@ export async function analyze(client, profile, override, progress) {
     ownerIds,
     overridden: !!(override && override.length),
     coauthorCount,
+    byYear,
     truncated,
     requests: client.requests,
     works: works.map((w) => {
