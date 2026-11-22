@@ -1,0 +1,41 @@
+/* Injected into Scholar profile pages. Inherits Scholar's font and colors; reuses its
+   gs_gray class for secondary text. Only the swapped figures get a distinct color, so a
+   filtered number is never mistaken for Scholar's own. */
+
+:root { --selfless-mark: #0b7a6f; }
+
+/* Controls under Scholar's stats table. */
+.selfless-controls { margin: 8px 0 4px; font-size: 13px; line-height: 1.5; }
+.selfless-filters { display: flex; flex-wrap: wrap; gap: 0 10px; align-items: baseline; }
+.selfless-filters a { text-decoration: none; }
+.selfless-filters a:hover { text-decoration: underline; }
+.selfless-filters a.selfless-current { color: inherit; font-weight: bold; cursor: default; text-decoration: none; }
+.selfless-status:empty, .selfless-foot:empty { display: none; }
+.selfless-status, .selfless-foot { font-size: 12px; margin-top: 4px; }
+.selfless-foot > div + div { margin-top: 2px; }
+.selfless-error { color: #d93025; }
+.selfless-warn { color: #b06000; }
+.selfless-actions { font-size: 12px; margin-top: 4px; display: flex; gap: 12px; }
+.selfless-actions a { text-decoration: none; }
+.selfless-actions a:hover { text-decoration: underline; }
+
+/* Swapped values in Scholar's stats table. */
+td.selfless-swapped { color: var(--selfless-mark); }
+.selfless-mark { color: var(--selfless-mark); font-weight: bold; }
+
+/* Second line in each paper's "Cited by" cell. */
+.selfless-row { font-size: 11px; line-height: 1.3; margin-top: 2px; white-space: nowrap; }
+.selfless-row .selfless-low { color: #b06000; font-size: 10px; }
+
+/* Paper breakdown panel, styled after Scholar's article table. */
+.selfless-panel { margin: 24px 0 16px; font-size: 13px; }
+.selfless-panel-title { font-size: 15px; font-weight: normal; margin: 0 0 6px; }
+.selfless-panel-note { font-size: 12px; margin: 2px 0; }
+.selfless-panel-table { border-collapse: collapse; width: 100%; margin-top: 10px; }
+.selfless-panel-table th {
+  font-size: 11px; font-weight: normal; text-transform: uppercase; color: #777;
+  text-align: right; padding: 6px 8px; border-bottom: 1px solid #e0e0e0;
+}
+.selfless-panel-table td { padding: 6px 8px; border-bottom: 1px solid #eee; text-align: right; vertical-align: top; }
+.selfless-panel-table th:first-child, .selfless-panel-table td:first-child { text-align: left; }
+.selfless-panel-table tr.selfless-unmatched td { background: rgba(176, 96, 0, 0.07); }

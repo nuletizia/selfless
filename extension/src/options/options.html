@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Selfless options</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <main>
+    <h1>Selfless</h1>
+    <p class="lead">Citation filters for Google Scholar profiles. Citations are checked against
+      OpenAlex; nothing else leaves your browser.</p>
+
+    <section>
+      <h2><label for="apiKey">OpenAlex API key</label></h2>
+      <p>Without a key, OpenAlex gives every network a small shared daily budget. A free
+        personal key is enough for any single profile. Get one at
+        <a href="https://openalex.org/settings/api" target="_blank" rel="noopener noreferrer">openalex.org/settings/api</a>
+        and paste it here. It is stored only in this browser and sent only to OpenAlex.</p>
+      <div class="row">
+        <input id="apiKey" type="password" autocomplete="off" spellcheck="false">
+        <button id="toggleKey" type="button">Show</button>
+        <button id="testKey" type="button">Test</button>
+      </div>
+      <p id="keyStatus" class="status" aria-live="polite"></p>
+    </section>
+
+    <section>
+      <h2><label for="defaultFilter">Filter when a profile opens</label></h2>
+      <select id="defaultFilter">
+        <option value="off">Off (Scholar numbers only)</option>
+        <option value="self">Excluding self-citations</option>
+        <option value="paper">Excluding paper-level self-citations</option>
+        <option value="coauthor">Excluding co-author citations</option>
+      </select>
+    </section>
+
+    <section>
+      <h2><label for="overrides">OpenAlex author for a profile</label></h2>
+      <p>Selfless finds the OpenAlex author from the papers on the Scholar page. If it picks
+        the wrong one, or the author is split across several OpenAlex IDs, set them here. One
+        profile per line: Scholar user ID, an equals sign, OpenAlex author IDs separated by
+        commas.</p>
+      <textarea id="overrides" rows="4" spellcheck="false" placeholder="v50jRAIAAAAJ = A5052977700"></textarea>
+      <p id="overrideStatus" class="status" aria-live="polite"></p>
+    </section>
+
+    <div class="row">
+      <button id="save" type="button" class="primary">Save</button>
+      <span id="saveStatus" class="status" aria-live="polite"></span>
+    </div>
+
+    <section>
+      <h2>Cache</h2>
+      <p>Results are kept for 7 days per profile. Clear them to force a fresh computation
+        everywhere.</p>
+      <div class="row">
+        <button id="clearCache" type="button">Clear cache</button>
+        <span id="cacheStatus" class="status" aria-live="polite"></span>
+      </div>
+    </section>
+
+    <footer>
+      Selfless is an independent open-source project, not affiliated with Google.
+      <a href="https://github.com/nuletizia/selfless" target="_blank" rel="noopener noreferrer">Source code</a>.
+    </footer>
+  </main>
+  <script type="module" src="options.js"></script>
+</body>
+</html>

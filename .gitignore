@@ -1,0 +1,12 @@
+.DS_Store
+node_modules/
+dist/
+*.zip
+*.crx
+*.pem
+.env
+__pycache__/
+
+# Local notes and data that name real researchers; not needed by the extension.
+HANDOFF.md
+spike/data/

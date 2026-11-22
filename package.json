@@ -1,0 +1,11 @@
+{
+  "name": "selfless",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Self-citation and co-author citation filters for Google Scholar profiles, computed with OpenAlex.",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "test": "node --test test/*.test.js"
+  }
+}
