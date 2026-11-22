@@ -41,7 +41,7 @@ const SelflessUI = (() => {
       else if (k === 'on') for (const [ev, fn] of Object.entries(v)) e.addEventListener(ev, fn);
       else if (v !== undefined && v !== null) e.setAttribute(k, v);
     }
-    for (const c of children.flat()) {
+    for (const c of children.flat(Infinity)) {
       if (c == null || c === false) continue;
       e.append(c instanceof Node ? c : document.createTextNode(String(c)));
     }
@@ -104,8 +104,8 @@ const SelflessUI = (() => {
       'div',
       { class: 'selfless-help', role: 'dialog', 'aria-label': 'About the Selfless filters', hidden: '' },
       el('div', { class: 'selfless-help-title' }, 'Selfless: who is citing this profile?'),
-      el('p', {}, 'The menu above the citation table leaves out citations by:'),
       el('p', {}, "Each choice leaves out citations from a wider group of people. The author is one of the paper's authors, and the paper's authors are part of the author's network, so each choice also removes everything the previous one removes."),
+      el('p', {}, 'The menu above the citation table leaves out citations by:'),
       el(
         'ul',
         {},
