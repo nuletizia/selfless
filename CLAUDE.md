@@ -41,8 +41,9 @@ For a cited paper P on the profile of owner O, a citing work X is:
 - **paper-level** if any author of P is among X's authors;
 - **co-author** if any author of any of O's works (or O) is among X's authors.
 
-Nested: self ⊆ paper-level ⊆ co-author. Author identity is the OpenAlex author ID, never
-a name string. Co-authors are taken from all years for v1 (time-aware variant is an open
+Nested: self ⊆ paper-level ⊆ co-author. UI labels (who is excluded): "the author",
+"the paper's authors", "the author's network"; internal keys `self`, `paper`,
+`coauthor`. Author identity is the OpenAlex author ID, never a name string. Co-authors are taken from all years for v1 (time-aware variant is an open
 question in HANDOFF.md).
 
 ## OpenAlex notes

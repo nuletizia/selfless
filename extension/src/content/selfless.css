@@ -4,17 +4,53 @@
 
 :root { --selfless-mark: #0b7a6f; }
 
-/* Controls under Scholar's stats table. */
-.selfless-controls { position: relative; margin: 8px 0 4px; font-size: 13px; line-height: 1.5; }
-.selfless-filters a.selfless-help-link {
-  display: inline-block; width: 15px; height: 15px; line-height: 15px; text-align: center;
-  border: 1px solid currentColor; border-radius: 50%; font-size: 10px; font-weight: bold;
+/* Filter menu in the top-left header cell of Scholar's stats table. Looks like header
+   text with a caret, not like a form control. */
+#gsc_rsb_st th:has(.selfless-picker) { text-align: left; }
+.selfless-picker { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.selfless-select-wrap { position: relative; display: inline-block; }
+.selfless-select-wrap::after {
+  content: ""; position: absolute; right: 2px; top: 50%; margin-top: -2px; pointer-events: none;
+  border-left: 4px solid transparent; border-right: 4px solid transparent; border-top: 4px solid currentColor;
+  color: #777;
 }
-.selfless-filters a.selfless-help-link:hover { text-decoration: none; }
+.selfless-select {
+  -webkit-appearance: none; appearance: none; border: 0; background: transparent; box-shadow: none;
+  font: inherit; font-size: 13px; color: #1a0dab; cursor: pointer; padding: 0 14px 0 0; margin: 0;
+  field-sizing: content; /* as wide as the selected option, so the caret sits next to it */
+  text-align: left;
+}
+.selfless-select:hover { text-decoration: underline; }
+.selfless-select:focus-visible { outline: 2px solid #1a0dab; outline-offset: 2px; border-radius: 2px; }
+.selfless-select.selfless-on { color: var(--selfless-mark); font-weight: bold; }
+.selfless-select-wrap.selfless-on::after { color: var(--selfless-mark); }
+a.selfless-help-link {
+  display: inline-block; width: 14px; height: 14px; line-height: 14px; text-align: center;
+  border: 1px solid #999; border-radius: 50%; font-size: 10px; font-weight: bold;
+  color: #777; text-decoration: none;
+}
+a.selfless-help-link:hover { color: #1a0dab; border-color: #1a0dab; }
+
+/* Footnote and links under the stats table. */
+.selfless-controls { position: relative; margin: 6px 0 4px; font-size: 12px; line-height: 1.45; }
+
+/* Status and all footnotes share one grid cell; only one is visible at a time. The cell
+   keeps the height of the longest one, so switching filters never moves the chart. */
+.selfless-stack { display: grid; min-height: 2.9em; }
+.selfless-stack > div { grid-area: 1 / 1; visibility: hidden; }
+.selfless-stack > .selfless-foot.selfless-active { visibility: visible; }
+.selfless-has-status .selfless-stack > .selfless-status { visibility: visible; }
+.selfless-has-status .selfless-stack > .selfless-foot { visibility: hidden; }
+.selfless-error { color: #d93025; }
+.selfless-warn { color: #b06000; }
+.selfless-actions { margin-top: 2px; display: flex; gap: 12px; }
+.selfless-actions.selfless-waiting { visibility: hidden; }
+.selfless-actions a { text-decoration: none; }
+.selfless-actions a:hover { text-decoration: underline; }
 
 /* Explanation popover, floating so it never shifts the page. */
 .selfless-help {
-  position: absolute; z-index: 20; top: 24px; left: 0; right: 0;
+  position: absolute; z-index: 20; top: 0; left: 0; right: 0;
   background: #fff; color: #222; border: 1px solid #ccc; border-radius: 4px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2); padding: 10px 12px; font-size: 12px; line-height: 1.45;
 }
@@ -24,24 +60,6 @@
 .selfless-help p { margin: 0 0 6px; }
 .selfless-help ul { margin: 0; padding-left: 16px; }
 .selfless-help li { margin: 2px 0; }
-.selfless-filters { display: flex; flex-wrap: wrap; gap: 0 10px; align-items: baseline; }
-.selfless-filters a { text-decoration: none; }
-.selfless-filters a:hover { text-decoration: underline; }
-.selfless-filters a.selfless-current { color: inherit; font-weight: bold; cursor: default; text-decoration: none; }
-/* Status and all footnotes share one grid cell; only one is visible at a time. The cell
-   keeps the height of the longest one (at least three lines), so nothing below moves. */
-.selfless-stack { display: grid; font-size: 12px; margin-top: 4px; min-height: 4.5em; }
-.selfless-stack > div { grid-area: 1 / 1; visibility: hidden; }
-.selfless-stack > .selfless-foot.selfless-active { visibility: visible; }
-.selfless-has-status .selfless-stack > .selfless-status { visibility: visible; }
-.selfless-has-status .selfless-stack > .selfless-foot { visibility: hidden; }
-.selfless-foot > div + div { margin-top: 2px; }
-.selfless-error { color: #d93025; }
-.selfless-warn { color: #b06000; }
-.selfless-actions { font-size: 12px; margin-top: 4px; display: flex; gap: 12px; }
-.selfless-actions.selfless-waiting { visibility: hidden; }
-.selfless-actions a { text-decoration: none; }
-.selfless-actions a:hover { text-decoration: underline; }
 
 /* Swapped values in Scholar's stats table. */
 td.selfless-swapped { color: var(--selfless-mark); }

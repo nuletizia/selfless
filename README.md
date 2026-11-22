@@ -12,27 +12,56 @@ numbers. Selfless adds the missing filters to the Scholar page you are already l
 
 ## The three filters
 
-Each level removes everything the previous one removes, plus more.
+On a Scholar profile, Selfless adds a menu in the top-left corner of the citation table
+("No filter", "Excl. author", "Excl. paper's authors", "Excl. network"). It leaves out
+citations by one of three groups: the author, the paper's authors, or the author's
+network.
 
-| Citing paper written by | 1. Self | 2. Paper-level | 3. Co-author |
+Each choice leaves out citations from a wider group of people. The author is one of the
+paper's authors, and the paper's authors are part of the author's network, so each
+choice also removes everything the previous one removes.
+
+| Citing paper written by | The author | The paper's authors | The author's network |
 |---|---|---|---|
 | The profile owner | removed | removed | removed |
 | A co-author of the cited paper, without the owner | kept | removed | removed |
 | Someone who co-authored *another* paper with the owner | kept | kept | removed |
 | Someone with no publication link to the owner | kept | kept | kept |
 
-1. **Self-citations.** The profile owner is an author of the citing paper. The classic
-   "excluding self-citations" figure.
-2. **Paper-level self-citations.** Any author of the cited paper is an author of the
-   citing paper. Matters most for supervisors and group leads, who sit on many papers.
-3. **Co-author citations.** Anyone the owner has ever published with is an author of the
-   citing paper. The strictest view: citations from outside the owner's network.
+1. **The author.** The profile owner wrote the citing paper. The classic "excluding
+   self-citations" figure.
+2. **The paper's authors.** Anyone who co-wrote the cited paper (the owner included)
+   wrote the citing paper. Matters most for supervisors and group leads, who sit on many
+   papers.
+3. **The author's network.** Anyone the owner has ever published with (the owner
+   included) wrote the citing paper. The strictest view: citations from outside the
+   owner's circle.
 
-For each filter Selfless shows the filtered citation count per paper (an extra column
-next to Scholar's own count, which is left untouched) and a recomputed total, h-index
-and i10-index. The filter is off when a profile opens. Totals cover every work of the
-author in OpenAlex, not only the rows Scholar shows before "Show more"; a paper
-breakdown panel lists them all.
+## What you see on the page
+
+Nothing changes until you pick a filter. Then, on the same Scholar page:
+
+- **Citation table.** Citations, h-index and i10-index (both "All" and "Since") are
+  replaced by the filtered values, shown in a different color and marked with `*`. The
+  footnote under the table says what they are computed on, for example "* Computed on
+  the 313 of 384 citations verified in OpenAlex (81.5%)", and how many citations the
+  filter removed. Hovering a number shows Scholar's original next to it.
+- **Citations per year chart.** The bars shrink to the filtered counts, on Scholar's own
+  scale, and change color. Hovering a bar shows both numbers.
+- **Each paper.** A small gray line under Scholar's "Cited by" count:
+  - `41 of 48`: citations left after the filter, out of those OpenAlex found for this
+    paper;
+  - `low`: OpenAlex found less than half of the citations Scholar counts for this paper,
+    so its number is less reliable (typical for books, older and very recent papers);
+  - `n/a`: the paper is not in OpenAlex, so it could not be checked. Unknown, not zero.
+- **Paper breakdown.** A link under the table opens a list of every work of the author
+  in OpenAlex with the counts for each filter, including works Scholar has not shown
+  yet (before "Show more") or lists differently.
+
+Picking "No filter" restores Scholar's numbers exactly. A **?** next to the menu
+explains all of this in the page, and the menu has a tooltip for each choice. Figures cover every work of the
+author in OpenAlex, not only the rows Scholar shows before "Show more". The default
+filter can be changed in the options page.
 
 ## How it works
 
@@ -51,7 +80,7 @@ could verify**, and the filters apply to that verified part.
 
 From the feasibility study:
 
-| Profile | Scholar | Found in OpenAlex | Self | Paper-level | Co-author |
+| Profile | Scholar | Found in OpenAlex | By the author | By the paper's authors | By the network |
 |---|---|---|---|---|---|
 | Early-career, 21 papers | 384 | 81.5% | 17.9% | 29.1% | 29.1% |
 | Senior, 300+ papers | 9,600 | 63.4% (about 75% without books) | 19.4% | 22.6% | 33.8% |

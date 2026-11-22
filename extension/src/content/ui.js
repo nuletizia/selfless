@@ -9,24 +9,25 @@
 // textContent; titles from OpenAlex are never parsed as HTML.
 
 const SelflessUI = (() => {
+  // Short labels: the dropdown sits in the narrow first header cell of Scholar's stats
+  // table. Tooltips and the help popover carry the full wording.
   const FILTERS = [
-    ['off', 'none'],
-    ['self', 'self'],
-    ['paper', 'paper-level'],
-    ['coauthor', 'co-author'],
+    ['off', 'No filter'],
+    ['self', 'Excl. author'],
+    ['paper', "Excl. paper's authors"],
+    ['coauthor', 'Excl. network'],
   ];
   const EXCLUDING = {
-    self: 'Excluding self-citations',
-    paper: 'Excluding paper-level self-citations',
-    coauthor: 'Excluding co-author citations',
+    self: 'Excluding citations by the author',
+    paper: "Excluding citations by the paper's authors",
+    coauthor: "Excluding citations by the author's network",
   };
-  const REMOVED = { self: 'Self-citations', paper: 'Paper-level self-citations', coauthor: 'Co-author citations' };
   const LOW_COVERAGE = 0.5;
   const TIPS = {
     off: "Scholar's own numbers, nothing excluded.",
-    self: 'Leave out citations from papers the profile owner wrote.',
-    paper: 'Also leave out citations from papers by any co-author of the cited paper.',
-    coauthor: 'Also leave out citations from anyone the profile owner has ever published with.',
+    self: 'Leave out citing papers written by the profile owner.',
+    paper: 'Leave out citing papers written by the owner or by anyone who co-wrote the cited paper.',
+    coauthor: 'Leave out citing papers written by the owner or by anyone they have ever published with.',
   };
 
   const fmt = (n) => (n == null ? '?' : n.toLocaleString('en-US'));
@@ -56,9 +57,13 @@ const SelflessUI = (() => {
   // The status line and the footnote of every filter are stacked in the same grid cell
   // and only the active one is visible, so the block always has the height of its
   // longest variant: switching filters never shifts the chart below it.
+  // The filter dropdown goes in the empty top-left header cell of Scholar's stats table,
+  // right above the numbers it changes. Footnote and links go under the table.
   function createControls(statsTable, { onFilter, onTogglePanel, onRefresh }) {
-    const links = FILTERS.map(([f, label]) =>
-      action(label, () => onFilter(f), { class: 'selfless-opt', 'data-filter': f, title: TIPS[f] }),
+    const select = el(
+      'select',
+      { class: 'selfless-select', 'aria-label': 'Exclude citations by', on: { change: (e) => onFilter(e.target.value) } },
+      FILTERS.map(([f, label]) => el('option', { value: f, title: TIPS[f] }, label)),
     );
     const help = createHelp();
     const helpLink = action('?', () => toggleHelp(help, helpLink), {
@@ -66,10 +71,13 @@ const SelflessUI = (() => {
       title: 'What do these filters mean?',
       'aria-expanded': 'false',
     });
+    const corner = statsTable.querySelector('thead tr th');
+    const picker = el('span', { class: 'selfless-picker' }, el('span', { class: 'selfless-select-wrap' }, select), helpLink);
+    if (corner) corner.append(picker);
     const box = el(
       'div',
       { id: 'selfless-controls', class: 'selfless-controls' },
-      el('div', { class: 'selfless-filters' }, el('span', { class: 'gs_gray' }, 'Exclude:'), links, helpLink),
+      corner ? null : picker,
       help,
       el(
         'div',
@@ -96,13 +104,14 @@ const SelflessUI = (() => {
       'div',
       { class: 'selfless-help', role: 'dialog', 'aria-label': 'About the Selfless filters', hidden: '' },
       el('div', { class: 'selfless-help-title' }, 'Selfless: who is citing this profile?'),
-      el('p', {}, 'Each filter removes the citations below, plus everything the previous one removes.'),
+      el('p', {}, 'The menu above the citation table leaves out citations by:'),
+      el('p', {}, "Each choice leaves out citations from a wider group of people. The author is one of the paper's authors, and the paper's authors are part of the author's network, so each choice also removes everything the previous one removes."),
       el(
         'ul',
         {},
-        item('self:', 'citing papers written by the profile owner.'),
-        item('paper-level:', 'citing papers written by any author of the cited paper (for example a supervisor or a co-author citing the shared paper).'),
-        item('co-author:', 'citing papers written by anyone the owner has ever published with.'),
+        item('the author:', 'citing papers written by the profile owner (classic self-citations).'),
+        item("the paper's authors:", 'citing papers written by anyone who co-wrote the cited paper, the owner included. Catches, for example, a supervisor citing a paper they co-wrote.'),
+        item("the author's network:", 'citing papers written by anyone the owner has ever published with, the owner included. The strictest view.'),
       ),
       el('p', {}, 'Citations are checked in OpenAlex, an open catalogue, which does not see every citation Scholar counts. Filtered numbers are marked * and are computed only on the citations OpenAlex found.'),
       el('div', { class: 'selfless-help-title' }, 'Under each paper'),
@@ -140,31 +149,31 @@ const SelflessUI = (() => {
     box.classList.toggle('selfless-has-status', !!text);
   }
 
+  // One short sentence per filter; the per-group shares live in the help popover and
+  // in the hover text of each number.
   function footFor(filter, data, scholar) {
     const s = data.summary;
     const verified = s.off.citations;
-    const base = `${fmt(verified)} of ${fmt(scholar.citations)} citations verified in OpenAlex (${pct(verified, scholar.citations)})`;
+    const pct0 = (a, b) => (b ? `${Math.round((100 * a) / b)}%` : '?');
+    const base = `${fmt(verified)} of ${fmt(scholar.citations)} citations verified in OpenAlex (${pct0(verified, scholar.citations)}).`;
     const lines =
       filter === 'off'
-        ? [
-            el('div', {}, `${base}.`),
-            el('div', {}, `Of these: self ${pct(s.self.removed, verified)}, paper-level ${pct(s.paper.removed, verified)}, co-author ${pct(s.coauthor.removed, verified)}.`),
-          ]
-        : [
-            el('div', {}, el('span', { class: 'selfless-mark' }, '*'), ` Computed on the ${base}.`),
-            el('div', {}, `${EXCLUDING[filter]}: ${fmt(s[filter].removed)} removed (${pct(s[filter].removed, verified)}).`),
-          ];
+        ? [el('div', {}, base)]
+        : [el('div', { title: `${EXCLUDING[filter]}: ${fmt(s[filter].removed)} of ${fmt(verified)} verified citations removed.` },
+            el('span', { class: 'selfless-mark' }, '*'), ` ${base} ${fmt(s[filter].removed)} removed (${pct0(s[filter].removed, verified)}).`)];
     if (data.result.truncated) {
-      lines.push(el('div', { class: 'selfless-warn' }, 'Some citing works were not loaded (OpenAlex 10,000 result cap without an API key). Counts are lower bounds.'));
+      lines.push(el('div', { class: 'selfless-warn', title: 'OpenAlex returns at most 10,000 results per query without an API key. Add one in Selfless options.' }, 'Incomplete: add an API key.'));
     }
     return lines;
   }
 
   function renderControls(box, { filter, data, scholar }) {
-    for (const a of box.querySelectorAll('.selfless-opt')) {
-      const on = a.dataset.filter === filter;
-      a.classList.toggle('selfless-current', on);
-      a.setAttribute('aria-pressed', String(on));
+    const select = document.querySelector('.selfless-select');
+    if (select) {
+      select.value = filter;
+      select.title = TIPS[filter];
+      select.classList.toggle('selfless-on', filter !== 'off');
+      select.parentElement.classList.toggle('selfless-on', filter !== 'off');
     }
     for (const foot of box.querySelectorAll('.selfless-foot')) {
       if (data && !foot.dataset.ready) {
@@ -272,7 +281,7 @@ const SelflessUI = (() => {
       const low = r.scholarCount > 0 && c.all / r.scholarCount < LOW_COVERAGE;
       const title =
         `Verified in OpenAlex: ${c.all} of ${r.scholarCount} Scholar citations.\n` +
-        `Excluding self: ${kept(c, 'self')}. Excluding paper-level: ${kept(c, 'paper')}. Excluding co-author: ${kept(c, 'coauthor')}.` +
+        `Excluding the author: ${kept(c, 'self')}. Excluding the paper's authors: ${kept(c, 'paper')}. Excluding the network: ${kept(c, 'coauthor')}.` +
         (low ? '\nLow coverage: under half of the Scholar citations were found.' : '');
       cell.append(
         el(
@@ -324,7 +333,7 @@ const SelflessUI = (() => {
           el(
             'tr',
             {},
-            ['Title', 'Year', 'Verified', 'Excl. self', 'Excl. paper-level', 'Excl. co-author'].map((h) => el('th', { scope: 'col' }, h)),
+            ['Title', 'Year', 'Verified', 'Excl. author', "Excl. paper's authors", 'Excl. network'].map((h) => el('th', { scope: 'col' }, h)),
           ),
         ),
         el(
