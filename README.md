@@ -1,10 +1,17 @@
 # Selfless
 
+[![Chrome Web Store](https://img.shields.io/chrome-web-store/v/doeoddoeiinbljeadljoijohkbfaianb?label=Chrome%20Web%20Store)](https://chromewebstore.google.com/detail/selfless/doeoddoeiinbljeadljoijohkbfaianb?utm_source=github)
+[![Users](https://img.shields.io/chrome-web-store/users/doeoddoeiinbljeadljoijohkbfaianb)](https://chromewebstore.google.com/detail/selfless/doeoddoeiinbljeadljoijohkbfaianb?utm_source=github)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+
 **Citation filters for Google Scholar.** Open a Scholar profile and see how many of its
 citations come from outside the author's own circle.
 
-> Status: early development. The extension in `extension/` runs from source but has not
-> been released.
+**[Install from the Chrome Web Store](https://chromewebstore.google.com/detail/selfless/doeoddoeiinbljeadljoijohkbfaianb?utm_source=github)**, then open any
+Google Scholar profile and pick a filter from the menu in the corner of the citation
+table.
+
+![Selfless on a Scholar profile: citations excluding the author's own, recomputed in place](store/screenshot-1-filter.png)
 
 Google Scholar is the citation page most researchers actually use, but it cannot exclude
 self-citations. Scopus and Web of Science can, behind a subscription and on their own
@@ -105,6 +112,9 @@ into the count if they belong to the profile.
 Without a key, OpenAlex gives every IP address a small shared daily budget and blocks
 cursor paging. A free personal key (openalex.org/settings/api) is enough for any single
 profile. Selfless will ask you to paste one in its options page.
+
+Bugs and ideas: [open an issue](https://github.com/nuletizia/selfless/issues/new/choose).
+Including the Scholar profile URL makes almost any problem reproducible.
 
 ## Run from source
 

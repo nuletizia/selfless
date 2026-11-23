@@ -8,5 +8,6 @@ dist/
 __pycache__/
 
 # Local notes and data that name real researchers; not needed by the extension.
+CLAUDE.local.md
 HANDOFF.md
 spike/data/

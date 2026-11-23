@@ -2,18 +2,26 @@
 
 Chrome extension (Manifest V3) that adds self-citation and co-author filters to Google
 Scholar profile pages, using OpenAlex as the citation source. Open source, MIT, author
-Nunzio Alexandro Letizia. Planned repo: `github.com/nuletizia/selfless` (not created yet).
-
-**Read `HANDOFF.md` first** (local only, git-ignored because it names real researchers; never commit it or copy names from it into tracked files). It holds the feasibility results, the decisions already
-made (including the settled v1 questions) and the scaffold status. `README.md` is the user-facing description of the filters.
+Nunzio Alexandro Letizia. Repo: `github.com/nuletizia/selfless` (public).
+Published on the Chrome Web Store:
+https://chromewebstore.google.com/detail/selfless/doeoddoeiinbljeadljoijohkbfaianb
+(item ID `doeoddoeiinbljeadljoijohkbfaianb`). `README.md` is the user-facing description
+of the filters and of what the extension shows.
 
 ## Current state
 
 - `extension/` is the MV3 extension (load it unpacked). Plain JS, no build step.
   `npm test` runs the Node tests in `test/` against `extension/src/lib/compute.js`.
-- `spike/` holds the Python feasibility script and the data it was run on.
-- `scripts/make_icons.py` redraws the icons (needs Pillow).
-- Git is initialized locally (no commits yet). The GitHub repo is not created yet.
+- `spike/` holds the Python feasibility script (`openalex_filters.py`) that the service
+  worker pipeline was ported from.
+- `scripts/package.sh` runs the tests and the dash check, then builds the store upload
+  `dist/selfless-<version>.zip`. Raise `version` in `extension/manifest.json` for every
+  upload; each update is reviewed again. Avoid adding permissions in updates: Chrome
+  disables the extension for existing users until they accept.
+- `store/` holds the listing texts (`listing.md`), screenshots and promo tile;
+  `PRIVACY.md` is the privacy policy URL. Keep both true to what the code does.
+- `scripts/make_icons.py`, `make_promo.py`, `make_screenshots.py` redraw the graphics
+  (need Pillow).
 
 ## Hard constraints (do not relax without asking the author)
 
@@ -43,8 +51,8 @@ For a cited paper P on the profile of owner O, a citing work X is:
 
 Nested: self ⊆ paper-level ⊆ co-author. UI labels (who is excluded): "the author",
 "the paper's authors", "the author's network"; internal keys `self`, `paper`,
-`coauthor`. Author identity is the OpenAlex author ID, never a name string. Co-authors are taken from all years for v1 (time-aware variant is an open
-question in HANDOFF.md).
+`coauthor`. Author identity is the OpenAlex author ID, never a name string. Co-authors
+are taken from all years (see Deferred).
 
 ## OpenAlex notes
 
@@ -61,9 +69,12 @@ question in HANDOFF.md).
 
 - Content script (`src/content/`) on Scholar `/citations` pages with `user=` (explicit
   list of Scholar domains in the manifest, since match patterns cannot wildcard a TLD):
-  reads name, stats table and paper rows; injects the Selfless card into the sidebar, an
-  extra column after "Cited by" (hidden while the filter is off) and the paper breakdown
-  panel at the end of `#gsc_art`. Never modifies Scholar's own numbers.
+  reads name, stats table, chart and paper rows. Injects a filter dropdown in the empty
+  top-left header cell of the stats table, a footnote and links under it, a gray second
+  line in each row's "Cited by" cell and the paper breakdown panel at the end of
+  `#gsc_art`. While a filter is on, the stats values and chart bars are swapped in place
+  (teal, asterisk, footnote with coverage); "No filter" restores Scholar's originals
+  exactly. Scholar selectors live in `scholar-dom.js` and are the most fragile part.
 - Service worker (`src/background/`): all OpenAlex calls (`openalex.js`), the pipeline
   (`analyze.js`), cache per Scholar user ID with a 7 day TTL in `chrome.storage.local`
   (`store.js`). Talks to the content script over a port named `selfless` (progress and
@@ -82,16 +93,24 @@ question in HANDOFF.md).
   (`clusterWorks`). Not applied otherwise: on clean profiles it drops real solo and
   older papers (tested: 22% of a senior profile's citations with 20 rows loaded).
 - Paper matching: normalized title (lowercase, alphanumerics, first ~20 chars) plus year
-  within ±1; unmatched rows are shown as "not found", not as zero.
+  within ±1; unmatched rows are shown as "n/a", never as zero.
 
-## Writing and git rules
+## Deferred (not in v1)
 
-- Prose (README, store listing, UI copy) follows `../Letizia/WRITING_STYLE.md`. The hard
-  rule: **no em dashes or en dashes** as punctuation. Check with `grep -rn '[—–]' .`
-- **Never run `git add`, `git commit`, `git push` or anything that rewrites history.**
-  Say what changed and suggest a commit message; the author commits.
+- **Time-aware co-authors:** count someone as a co-author only if they had published
+  with the owner before the citing paper appeared.
+- **Firefox:** MV3 on Firefox needs a background script instead of a service worker and
+  `browser_specific_settings` in the manifest.
+- **Second citation source** (for example Semantic Scholar) to raise coverage; not tested.
 
-## Related
+## Writing rules
 
-- Project registry: `../Letizia/notes/projects.md` (entry "Selfless").
-- Sibling projects for conventions: `../StrideAtlas`, `../OptiQA/image-comparison-app`.
+Prose (README, store listing, privacy policy, UI copy):
+
+- **No em dashes or en dashes** as punctuation; use a comma, colon, parentheses or two
+  sentences. Hyphens in compound words are fine. `scripts/package.sh` refuses to build
+  if it finds one; check by hand with `grep -rn '[—–]' .`
+- Plain and specific: lead with the claim, no filler intensifiers, no exclamation marks,
+  no emoji.
+- Never publish a number that cannot be checked; coverage goes next to filtered figures.
+- Do not name real researchers in tracked files (tests use made-up names).

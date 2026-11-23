@@ -1,0 +1,27 @@
+name: Bug report
+description: Wrong numbers, nothing shown, or something broken on a Scholar profile
+labels: [bug]
+body:
+  - type: input
+    id: profile
+    attributes:
+      label: Scholar profile URL
+      description: The public profile where it happens, for example https://scholar.google.com/citations?user=...
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What Selfless showed (numbers, footnote text, error message). A screenshot helps.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+  - type: input
+    id: version
+    attributes:
+      label: Selfless and Chrome versions
+      description: Selfless version from chrome://extensions, Chrome version from chrome://version
